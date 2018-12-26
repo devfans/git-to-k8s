@@ -4,10 +4,10 @@ Small tool to automate the git to url flow on k8s
 
 # Steps for typical normal project:
 
- commit project code to git repo
- included deployment attributes and charts in package.json
- use custom tool clone the repo,  build images and push to container register
- launch deploy with helm on k8s
+- commit project code to git repo
+- included deployment attributes and charts in package.json
+- use custom tool clone the repo,  build images and push to container register
+- launch deploy with helm on k8s
 
 Sample package.json:
 ```
