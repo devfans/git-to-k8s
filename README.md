@@ -10,7 +10,7 @@ Small tool to automate the git to url flow on k8s
  launch deploy with helm on k8s
 
 Sample package.json:
-
+```
 {
   "deploy": {
     "images": [
@@ -30,3 +30,4 @@ Sample package.json:
     ]
   }
 }
+```
