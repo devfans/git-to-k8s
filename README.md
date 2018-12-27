@@ -14,16 +14,16 @@ npm install -g git-to-k8s
 ## Get Started
 
 ### Dependencies
-- helm initialize in cluster
+- helm initialized in Kubernetes cluster
 - docker available and logged in already to registry
 - git available
 
-### Steps for typical normal project:
+### Steps for a normal project:
 
 - commit project code to git repo
 - included deployment attributes and charts in package.json
-- use custom tool clone the repo,  build images and push to container register
-- launch deploy with helm on k8s
+- use custom tool clone the repo,  build images and push to container registry
+- launch deployment with helm on k8s (helm install or helm upgrade)
 
 ### Sample package.json:
 

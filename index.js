@@ -112,7 +112,7 @@ class Image {
     this.tag = options.tag
     this.path = options.path || '.'
     this.registry = options.registry
-  } 
+  }
 }
 
 class Chart {
@@ -237,7 +237,7 @@ class MainFlow {
   }
 
   _run () {
-    this.prepare() 
+    this.prepare()
     this.steps.forEach((_step, index) => {
       const step = typeof(_step) === 'object' ? _step : _step()
       logger.iinfo(`Step: ${1 + index} / ${this.steps.length} - ${step.name}`)
@@ -254,7 +254,7 @@ class MainFlow {
 
   _dry_run() {
     logger.iinfo('dry running...')
-    this.prepare() 
+    this.prepare()
     this.steps.forEach((_step, index) => {
       const step = typeof(_step) === 'function' ? _step() : _step
       logger.iinfo(`Step: ${1 + index} / ${this.steps.length} - ${step.name}`)
