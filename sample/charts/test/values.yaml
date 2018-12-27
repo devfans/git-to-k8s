@@ -1,0 +1,29 @@
+## ref: https://hub.docker.com/r/bitnami/test/tags/
+##
+image:
+  registry: docker.io
+  repository: devfans/test
+  tag: 0.0.1
+  pullPolicy: IfNotPresent
+  # pullSecrets:
+  #   - myRegistrKeySecretName
+
+testPath: /
+
+## Ghost port to create application URLs along with host.
+## ref: https://github.com/bitnami/bitnami-docker-test#configuration
+##
+testPort: 80
+serviceType: ClusterIP
+resources:
+  requests:
+    memory: 10Mi
+    cpu: 10m
+
+ingress:
+  enabled: false
+  annotations: {}
+  path: /
+  hosts:
+    - test.local
+  tls: []

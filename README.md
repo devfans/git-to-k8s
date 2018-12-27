@@ -1,7 +1,17 @@
 # git-to-k8s
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+[![Build Status][travis-image]][travis-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
+
 Small tool to automate the git to url flow on k8s
 
+## Installation
+```
+npm install -g git-to-k8s
+```
 
+## Get Started
 # Steps for typical normal project:
 
 - commit project code to git repo
@@ -31,3 +41,14 @@ Sample package.json:
   }
 }
 ```
+
+[npm-image]: https://img.shields.io/npm/v/git-to-k8s.svg
+[npm-url]: https://npmjs.org/package/git-to-k8s
+[travis-image]: https://img.shields.io/travis/devfans/git-to-k8s/master.svg
+[travis-url]: https://travis-ci.org/devfans/git-to-k8s
+[coveralls-image]: https://img.shields.io/coveralls/devfans/git-to-k8s/master.svg
+[coveralls-url]: https://coveralls.io/r/devfans/git-to-k8s?branch=master
+[downloads-image]: https://img.shields.io/npm/dm/git-to-k8s.svg
+[downloads-url]: https://npmjs.org/package/git-to-k8s
+
+

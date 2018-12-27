@@ -1,0 +1,8 @@
+name: test
+version: 5.0.3
+appVersion: 2.1.4
+description: A simple test
+keywords:
+- test
+home: http://www.test.org/
+engine: gotpl
