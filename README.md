@@ -12,6 +12,12 @@ npm install -g git-to-k8s
 ```
 
 ## Get Started
+
+### Dependencies
+- helm initialize in cluster
+- docker available and logged in already to registry
+- git available
+
 # Steps for typical normal project:
 
 - commit project code to git repo
@@ -23,23 +29,26 @@ Sample package.json:
 ```
 {
   "deploy": {
+    "registry": "(optional, default registry for images)",
     "images": [
       {
         "dockerfile": "(optional, default: Dockerfile)",
         "name": "app1",
         "tag": "0.1.1",
-        "dir": "(optional, default: .)"
+        "path": "(optional, default: .)",
+        "registry": "(optional, registry for images)"
       }
     ],
     "charts": [
       {
         "path": "charts (optional, default: charts)",
         "values": "values.prod.yaml",
-        "release": "app1"
+        "release": "px.app1"
       }
     ]
   }
 }
+
 ```
 
 [npm-image]: https://img.shields.io/npm/v/git-to-k8s.svg

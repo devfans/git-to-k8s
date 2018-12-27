@@ -215,7 +215,7 @@ class MainFlow {
       cmds: this.charts.map(chart => {
         const dir = path.join(chart.path, chart.values)
         if (_shell.exec(`helm list | grep ${chart.release}`).code == 0) {
-          return `helm upgrade --name ${chart.release} -f ${dir} ./${chart.path}`
+          return `helm upgrade -f ${dir} ${chart.release} ./${chart.path}`
         }
         return `helm install --name ${chart.release} -f ${dir} ./${chart.path}`
       })
@@ -276,8 +276,4 @@ class MainFlow {
   }
 }
 
-(function () {
-  const mf = new MainFlow()
-  mf.run()
-}) ()
-
+module.exports = { MainFlow, Logger, logger, shell, Image, Step, Chart }
