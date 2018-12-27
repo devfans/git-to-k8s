@@ -71,13 +71,23 @@ class Logger {
 
 const logger = new Logger();
 const shell = {
-  run (...args) {
-    const ctx = _shell.exec(...args)
+  parse_special (cmd, ...args) {
+    if (/^cd /.test(cmd)) {
+      _shell.cd(cmd.replace(/^cd /, ''))
+      return false
+    } else {
+      return true
+    }
+  },
+  run (cmd, ...args) {
+    if (!shell.parse_special(cmd, ...args)) return
+    const ctx = _shell.exec(cmd, ...args)
     if (ctx.code !== 0) logger.fatal(`Failed to run ${args.join(' ')}`)
     return ctx
   },
-  safe_run(...args) {
-    const ctx = _shell.exec(...args)
+  safe_run(cmd, ...args) {
+    if (!shell.parse_special(cmd, ...args)) return
+    const ctx = _shell.exec(cmd, ...args)
     if (ctx.code !== 0) logger.warn(`Failed to run ${args.join(' ')}`)
     return ctx
   }
@@ -100,14 +110,14 @@ class Image {
     this.dockerfile = options.dockerfile || 'Dockerfile'
     this.name = options.name
     this.tag = options.tag
-    this.path = options.dir || '.'
+    this.path = options.path || '.'
     this.registry = options.registry
   } 
 }
 
 class Chart {
   constructor (options = {}) {
-    this.path = options.path | 'charts'
+    this.path = options.path || 'charts'
     this.values = options.values
     this.release = options.release
   }
@@ -130,7 +140,7 @@ class MainFlow {
     this.repo_url = parser.subcommand
     const _repo_name = /\/([^\/]+)$/.exec(this.repo_url)
     if (!_repo_name) logger.fatal(`Invalid repo url!`)
-    this.repo_name = _repo_name[1].replace(/.git$/, '')
+    this.repo_name = _repo_name[1].replace(/.git$/, '').replace(/[^\w.-]/g, '')
     this.check_deps()
 
     if (this.dry) this._dry_run()
@@ -170,13 +180,15 @@ class MainFlow {
       cmds: [
         `mkdir -p ${pkg.tmp_dir}`,
         `cd ${pkg.tmp_dir}`,
-        `git clone --depth=1 ${this.repo_url}`,
+        `rm -rf ${this.repo_name}`,
+        `git clone --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
         `cd ${this.repo_name}`
       ],
       dry_cmds: [
         `mkdir -p ${pkg.tmp_dir}`,
         `cd ${pkg.tmp_dir}`,
-        `git clone --depth=1 ${this.repo_url}`,
+        `rm -rf ${this.repo_name}`,
+        `git clone --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
         `cd ${this.repo_name}`
       ],
       post: parse_proj
@@ -188,12 +200,12 @@ class MainFlow {
       cmds: this.images.map(image => {
         const tag = path.join(image.registry, image.name) + ':' + image.tag
         const dir = image.path || '.'
-        return `docker build ${image.path} -t ${tag} -f ${path.join(dir, image.dockerfile)} ${dir}`
+        return `docker build -t ${tag} -f ${path.join(dir, image.dockerfile)} ${dir}`
       }).concat(this.images.map(image => `docker push ${path.join(image.registry, image.name) + ':' + image.tag}`)),
       dry_cmds: this.images.map(image => {
         const tag = path.join(image.registry, image.name) + ':' + image.tag
         const dir = image.path || '.'
-        return `docker build ${image.path} -t ${tag} -f ${path.join(dir, image.dockerfile)} ${dir}`
+        return `docker build -t ${tag} -f ${path.join(dir, image.dockerfile)} ${dir}`
       })
     }))
 
@@ -201,10 +213,11 @@ class MainFlow {
     this.steps.push(() => new Step({
       name: 'deploy charts',
       cmds: this.charts.map(chart => {
+        const dir = path.join(chart.path, chart.values)
         if (_shell.exec(`helm list | grep ${chart.release}`).code == 0) {
-          return `helm upgrade --name ${chart.release} -f ${chart.values} ./${chart.path}`
+          return `helm upgrade --name ${chart.release} -f ${dir} ./${chart.path}`
         }
-        return `helm install --name ${chart.release} -f ${chart.values} ./${chart.path}`
+        return `helm install --name ${chart.release} -f ${dir} ./${chart.path}`
       })
     }))
 
@@ -226,7 +239,7 @@ class MainFlow {
   _run () {
     this.prepare() 
     this.steps.forEach((_step, index) => {
-      step = typeof(step) === 'object' ? _step : _step()
+      const step = typeof(_step) === 'object' ? _step : _step()
       logger.iinfo(`Step: ${1 + index} / ${this.steps.length} - ${step.name}`)
       if (step.pre_hook) step.pre_hook()
       step.cmds.forEach(cmd => {
