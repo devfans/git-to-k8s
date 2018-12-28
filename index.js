@@ -112,6 +112,7 @@ class Image {
     this.tag = options.tag
     this.path = options.path || '.'
     this.registry = options.registry
+    this.prepare = options.prepare
   }
 }
 
@@ -127,6 +128,7 @@ class MainFlow {
   constructor () {
     this.deps = ['git', 'docker', 'helm', 'kubectl']
     this.dry = parser.get('dry') !== undefined
+    this.purge_first = parser.get('purge') !== undefined
     this.repo_branch = parser.get('b') || 'master'
     this.steps = []
   }
@@ -138,7 +140,7 @@ class MainFlow {
     }
 
     if (parser.get('help')) {
-      logger.info('Usage: git-to-k8s [--dry] [-b branch] repo_url')
+      logger.info('Usage: git-to-k8s [--dry] [-b branch] [--purge] repo_url')
       logger.exit_success()
     }
 
@@ -162,7 +164,8 @@ class MainFlow {
         path: _image.path,
         tag: _image.tag,
         dockerfile: _image.dockerfile,
-        registry: _image.registry || this.proj.deploy.registry
+        registry: _image.registry || this.proj.deploy.registry,
+        prepare: _image.prepare
       }))
       this.charts = this.proj.deploy.charts.map(_chart => new Chart({
         path: _chart.path,
@@ -187,45 +190,61 @@ class MainFlow {
         `mkdir -p ${pkg.tmp_dir}`,
         `cd ${pkg.tmp_dir}`,
         `rm -rf ${this.repo_name}`,
-        `git clone --depth=1 ${this.repo_url} --single-branch --branch ${this.repo_branch} ${path.join(pkg.tmp_dir, this.repo_name)}`,
+        `git clone --single-branch --branch ${this.repo_branch} --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
         `cd ${this.repo_name}`
       ],
       dry_cmds: [
         `mkdir -p ${pkg.tmp_dir}`,
         `cd ${pkg.tmp_dir}`,
         `rm -rf ${this.repo_name}`,
-        `git clone --depth=1 ${this.repo_url} --single-branch --branch ${this.repo_branch} ${path.join(pkg.tmp_dir, this.repo_name)}`,
+        `git clone --single-branch --branch ${this.repo_branch} --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
         `cd ${this.repo_name}`
       ],
       post: parse_proj
     }))
 
     // STEP-2: build and images
-    this.steps.push(() => new Step({
-      name: 'build docker images and push to registry',
-      cmds: this.images.map(image => {
+    this.steps.push(() => {
+      // build image
+      const cmds_build_image = []
+      this.images.forEach(image => {
         const tag = path.join(image.registry, image.name) + ':' + image.tag
         const dir = image.path || '.'
-        return `docker build -t ${tag} -f ${path.join(dir, image.dockerfile)} ${dir}`
-      }).concat(this.images.map(image => `docker push ${path.join(image.registry, image.name) + ':' + image.tag}`)),
-      dry_cmds: this.images.map(image => {
-        const tag = path.join(image.registry, image.name) + ':' + image.tag
-        const dir = image.path || '.'
-        return `docker build -t ${tag} -f ${path.join(dir, image.dockerfile)} ${dir}`
+        if (image.prepare && image.prepare.length > 0) cmds_build_image.push(image.prepare)
+        cmds_build_image.push(`docker build -t ${tag} -f ${path.join(dir, image.dockerfile)} ${dir}`)
       })
-    }))
+
+      // push image
+      const cmds_push_image = this.images.map(image => `docker push ${path.join(image.registry, image.name) + ':' + image.tag}`)
+
+      return new Step({
+        name: 'build docker images and push to registry',
+        cmds: cmds_build_image.concat(cmds_push_image),
+        dry_cmds: cmds_build_image
+      })
+    })
 
     // STEP-3: deploy charts
-    this.steps.push(() => new Step({
-      name: 'deploy charts',
-      cmds: this.charts.map(chart => {
+    this.steps.push(() => {
+      const cmds = []
+
+      this.charts.forEach(chart => {
         const dir = path.join(chart.path, chart.values)
-        if (_shell.exec(`helm list | grep ${chart.release}`).code == 0) {
-          return `helm upgrade -f ${dir} ${chart.release} ./${chart.path}`
+        if (_shell.exec(`helm get ${chart.release}`).code == 0) {
+          if (this.purge_first) {
+            cmds.push(`helm delete ${chart.release} --purge`)
+          } else {
+            cmds.push(`helm upgrade -f ${dir} ${chart.release} ${chart.path}`)
+            return
+          }
         }
-        return `helm install --name ${chart.release} -f ${dir} ./${chart.path}`
+        cmds.push(`helm install --name ${chart.release} -f ${dir} ${chart.path}`)
       })
-    }))
+      return new Step({
+        name: 'deploy charts',
+        cmds
+      })
+    })
 
     // STEP-4: clean up
     this.steps.push(new Step({

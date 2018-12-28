@@ -33,6 +33,7 @@ npm install -g git-to-k8s
     "registry": "(optional, default registry for images)",
     "images": [
       {
+        "prepare": "npm build (optional)",
         "dockerfile": "(optional, default: Dockerfile)",
         "name": "app1",
         "tag": "0.1.1",
@@ -57,7 +58,7 @@ npm install -g git-to-k8s
 $ npm i -g git-to-k8s
 
 $ git-to-k8s --help
-Usage: git-to-k8s [--dry] [-b branch] repo_url
+Usage: git-to-k8s [--dry] [-b branch] [--purge] repo_url
 
 $ git-to-k8s https://github.com/devfans/git-to-k8s 
  Checking dependencies... 
