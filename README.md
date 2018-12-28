@@ -52,9 +52,13 @@ npm install -g git-to-k8s
 
 ```
 
-### Commandline
+### Commands
 ```
 $ npm i -g git-to-k8s
+
+$ git-to-k8s --help
+Usage: git-to-k8s [--dry] [-b branch] repo_url
+
 $ git-to-k8s https://github.com/devfans/git-to-k8s 
  Checking dependencies... 
  Target git remote url: https://github.com/devfans/git-to-k8s 

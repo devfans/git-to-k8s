@@ -127,12 +127,18 @@ class MainFlow {
   constructor () {
     this.deps = ['git', 'docker', 'helm', 'kubectl']
     this.dry = parser.get('dry') !== undefined
+    this.repo_branch = parser.get('b') || 'master'
     this.steps = []
   }
 
   run () {
     if (parser.get('version')) {
       logger.info(pkg.version)
+      logger.exit_success()
+    }
+
+    if (parser.get('help')) {
+      logger.info('Usage: git-to-k8s [--dry] [-b branch] repo_url')
       logger.exit_success()
     }
 
@@ -181,14 +187,14 @@ class MainFlow {
         `mkdir -p ${pkg.tmp_dir}`,
         `cd ${pkg.tmp_dir}`,
         `rm -rf ${this.repo_name}`,
-        `git clone --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
+        `git clone --depth=1 ${this.repo_url} --single-branch --branch ${this.repo_branch} ${path.join(pkg.tmp_dir, this.repo_name)}`,
         `cd ${this.repo_name}`
       ],
       dry_cmds: [
         `mkdir -p ${pkg.tmp_dir}`,
         `cd ${pkg.tmp_dir}`,
         `rm -rf ${this.repo_name}`,
-        `git clone --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
+        `git clone --depth=1 ${this.repo_url} --single-branch --branch ${this.repo_branch} ${path.join(pkg.tmp_dir, this.repo_name)}`,
         `cd ${this.repo_name}`
       ],
       post: parse_proj
