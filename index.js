@@ -140,7 +140,7 @@ class MainFlow {
     }
 
     if (parser.get('help')) {
-      logger.info('Usage: git-to-k8s [--dry] [-b branch] [--purge] repo_url')
+      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge]')
       logger.exit_success()
     }
 
@@ -250,10 +250,10 @@ class MainFlow {
     this.steps.push(new Step({
       name: 'Clean up',
       cmds: [
-        `rm -rf ${pkg.tmp_dir}`
+        `rm -rf ${path.join(pkg.tmp_dir, this.repo_name)}`
       ],
       dry_cmds: [
-        `rm -rf ${pkg.tmp_dir}`
+        `rm -rf ${path.join(pkg.tmp_dir, this.repo_name)}`
       ]
     }))
 

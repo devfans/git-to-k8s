@@ -1,6 +1,6 @@
 {
   "name": "git-to-k8s",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Small tool to automate the git to url flow on k8s",
   "main": "index.js",
   "scripts": {
@@ -55,10 +55,12 @@
         "path": "sample"
       }
     ],
-    "charts": [{
-      "values": "values.yaml",
-      "release": "test-git-to-k8s",
-      "path": "sample/charts/test"
-    }]
+    "charts": [
+      {
+        "values": "values.yaml",
+        "release": "test-git-to-k8s",
+        "path": "sample/charts/test"
+      }
+    ]
   }
 }
