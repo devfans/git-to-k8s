@@ -58,7 +58,7 @@ npm install -g git-to-k8s
 $ npm i -g git-to-k8s
 
 $ git-to-k8s --help
-Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge]
+Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug]
 
 $ git-to-k8s https://github.com/devfans/git-to-k8s 
  Checking dependencies... 

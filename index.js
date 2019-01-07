@@ -128,6 +128,7 @@ class MainFlow {
   constructor () {
     this.deps = ['git', 'docker', 'helm', 'kubectl']
     this.dry = parser.get('dry') !== undefined
+    this.debug = parser.get('debug') !== undefined
     this.purge_first = parser.get('purge') !== undefined
     this.repo_branch = parser.get('b') || 'master'
     this.steps = []
@@ -140,7 +141,7 @@ class MainFlow {
     }
 
     if (parser.get('help')) {
-      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge]')
+      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug]')
       logger.exit_success()
     }
 
@@ -232,13 +233,13 @@ class MainFlow {
         const dir = path.join(chart.path, chart.values)
         if (_shell.exec(`helm get ${chart.release}`).code == 0) {
           if (this.purge_first) {
-            cmds.push(`helm delete ${chart.release} --purge`)
+            cmds.push(`helm delete ${chart.release} --purge${this.debug ? ' --debug': ''}`)
           } else {
-            cmds.push(`helm upgrade -f ${dir} ${chart.release} ${chart.path}`)
+            cmds.push(`helm upgrade -f ${dir} ${chart.release} ${chart.path}${this.debug ? ' --debug': ''}`)
             return
           }
         }
-        cmds.push(`helm install --name ${chart.release} -f ${dir} ${chart.path}`)
+        cmds.push(`helm install --name ${chart.release} -f ${dir} ${chart.path}${this.debug ? ' --debug': ''}`)
       })
       return new Step({
         name: 'deploy charts',
