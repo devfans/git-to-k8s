@@ -186,7 +186,7 @@ class MainFlow {
 
     // STEP-1: clone repo
     const make_repo_copy = () => {
-      let get_repo_cmd = `git clone --single-branch --branch ${this.repo_branch} --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}` 
+      let get_repo_cmd = `git clone --single-branch --branch ${this.repo_branch} --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`
       if (this.local) get_repo_cmd = `cp -rf ${path.resolve(this.repo_url)} ${path.join(pkg.tmp_dir, this.repo_name)}`
       const cmds = [
         `mkdir -p ${pkg.tmp_dir}`,
