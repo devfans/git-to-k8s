@@ -1,6 +1,6 @@
 {
   "name": "git-to-k8s",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Small tool to automate the git to url flow on k8s",
   "main": "index.js",
   "scripts": {

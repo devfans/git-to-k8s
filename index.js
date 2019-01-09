@@ -129,6 +129,7 @@ class MainFlow {
     this.deps = ['git', 'docker', 'helm', 'kubectl']
     this.dry = parser.get('dry') !== undefined
     this.debug = parser.get('debug') !== undefined
+    this.local = parser.get('local') !== undefined
     this.purge_first = parser.get('purge') !== undefined
     this.repo_branch = parser.get('b') || 'master'
     this.steps = []
@@ -141,7 +142,7 @@ class MainFlow {
     }
 
     if (parser.get('help')) {
-      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug]')
+      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local]')
       logger.exit_success()
     }
 
@@ -177,7 +178,6 @@ class MainFlow {
       logger.error(e)
       logger.fatal(`Invalid file: ${pkg.proj_file}`)
     }
-
   }
 
   prepare() {
@@ -185,24 +185,24 @@ class MainFlow {
     parse_proj.dry = true
 
     // STEP-1: clone repo
-    this.steps.push(new Step({
-      name: 'Clone repo to local temp work directory',
-      cmds: [
+    const make_repo_copy = () => {
+      let get_repo_cmd = `git clone --single-branch --branch ${this.repo_branch} --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}` 
+      if (this.local) get_repo_cmd = `cp -rf ${this.repo_branch} ${path.join(pkg.tmp_dir, this.repo_name)}`
+      const cmds = [
         `mkdir -p ${pkg.tmp_dir}`,
         `cd ${pkg.tmp_dir}`,
         `rm -rf ${this.repo_name}`,
-        `git clone --single-branch --branch ${this.repo_branch} --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
+        get_repo_cmd,
         `cd ${this.repo_name}`
-      ],
-      dry_cmds: [
-        `mkdir -p ${pkg.tmp_dir}`,
-        `cd ${pkg.tmp_dir}`,
-        `rm -rf ${this.repo_name}`,
-        `git clone --single-branch --branch ${this.repo_branch} --depth=1 ${this.repo_url} ${path.join(pkg.tmp_dir, this.repo_name)}`,
-        `cd ${this.repo_name}`
-      ],
-      post: parse_proj
-    }))
+      ]
+      return {
+        name: `${this.local? 'Copy' : 'Clone'} repo to local temp work directory`,
+        cmds,
+        dry_cmds: cmds,
+        post: parse_proj
+      }
+    }
+    this.steps.push(new Step(make_repo_copy()))
 
     // STEP-2: build and images
     this.steps.push(() => {
@@ -219,7 +219,7 @@ class MainFlow {
       const cmds_push_image = this.images.map(image => `docker push ${path.join(image.registry, image.name) + ':' + image.tag}`)
 
       return new Step({
-        name: 'build docker images and push to registry',
+        name: 'Build docker images and push to registry',
         cmds: cmds_build_image.concat(cmds_push_image),
         dry_cmds: cmds_build_image
       })
@@ -242,7 +242,7 @@ class MainFlow {
         cmds.push(`helm install --name ${chart.release} -f ${dir} ${chart.path}${this.debug ? ' --debug': ''}`)
       })
       return new Step({
-        name: 'deploy charts',
+        name: 'Deploy charts',
         cmds
       })
     })

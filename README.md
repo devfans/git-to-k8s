@@ -21,8 +21,8 @@ npm install -g git-to-k8s
 ### Steps for a normal project:
 
 - commit project code to git repo
-- included deployment attributes and charts in package.json
-- use custom tool clone the repo,  build images and push to container registry
+- include deployment attributes in package.json and add charts
+- clone the repo to local, build images and push to container registry
 - launch deployment with helm on k8s (helm install or helm upgrade)
 
 ### Sample package.json:
@@ -58,7 +58,11 @@ npm install -g git-to-k8s
 $ npm i -g git-to-k8s
 
 $ git-to-k8s --help
-Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug]
+Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local]
+
+// --purge will do helm delete --purge to remove old releases
+// --local will use local repo directly
+// -b specify the branch, default will use master branch
 
 $ git-to-k8s https://github.com/devfans/git-to-k8s 
  Checking dependencies... 
@@ -124,7 +128,7 @@ test-git-to-k8s  0s
 
 
  Step: 4 / 4 - Clean up 
- - shell: rm -rf /var/tmp/git-to-k8s 
+ - shell: rm -rf /var/tmp/git-to-k8s/git-to-k8s
 
 ```
 
