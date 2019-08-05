@@ -54,16 +54,23 @@ npm install -g git-to-k8s
 ```
 
 ### Commands
+
+Installation
 ```
 $ npm i -g git-to-k8s
-
 $ git-to-k8s --help
-Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local]
-
-// --purge will do helm delete --purge to remove old releases
-// --local will use local repo directly
-// -b specify the branch, default will use master branch
-
+Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local] [--image-only] [--chart-only] 
+ Options: 
+     --help: get help info 
+     --local: use a local file system copy as source 
+     --purge: purge helm release first before deploy each chart 
+     --image-only: only update images to registry 
+     --chart-only: only deploy charts without touching images 
+     --dry: dry run only and shows commands to execute, with images will be built 
+     --debug: show debug info from helm 
+```
+Sample:
+```
 $ git-to-k8s https://github.com/devfans/git-to-k8s 
  Checking dependencies... 
  Target git remote url: https://github.com/devfans/git-to-k8s 

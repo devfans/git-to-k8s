@@ -41,7 +41,7 @@
   },
   "homepage": "https://github.com/devfans/git-to-k8s#readme",
   "dependencies": {
-    "argio": "0.0.2",
+    "argio": "0.0.3",
     "shelljs": "^0.8.3"
   },
   "tmp_dir": "/var/tmp/git-to-k8s",

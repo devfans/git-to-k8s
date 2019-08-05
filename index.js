@@ -143,7 +143,7 @@ class MainFlow {
       logger.exit_success()
     }
 
-    if (parser.get('help')) {
+    if (parser.get('help') || parser.params.attributes.includes('h')) {
       logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local] [--image-only] [--chart-only]')
       logger.info('Options:')
       logger.info('    --help: get help info')
@@ -156,7 +156,7 @@ class MainFlow {
       logger.exit_success()
     }
 
-    if (parser.subcommand === undefined) logger.fatal('Git remote url is required!')
+    if (parser.subcommand === undefined) logger.fatal('Git remote url is required! use --help for more info!')
     this.repo_url = parser.subcommand
     const _repo_name = /\/([^\/]+)$/.exec(this.repo_url)
     if (!_repo_name) logger.fatal(`Invalid repo url!`)
