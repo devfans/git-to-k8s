@@ -71,72 +71,202 @@ Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local] [--
 ```
 Sample:
 ```
-$ git-to-k8s https://github.com/devfans/git-to-k8s 
+# Or git-to-k8s https://github.com/devfans/git-to-k8s 
+$ git-to-k8s ../git-to-k8s --local 
  Checking dependencies... 
- Target git remote url: https://github.com/devfans/git-to-k8s 
+ Target git remote url: ../git-to-k8s 
  Total 4 steps to run 
- Step: 1 / 4 - Clone repo to local temp work directory 
+ Step: 1 / 4 - Copy repo to local temp work directory 
  - shell: mkdir -p /var/tmp/git-to-k8s  
  - shell: cd /var/tmp/git-to-k8s  
  - shell: rm -rf git-to-k8s  
- - shell: git clone --depth=1 https://github.com/devfans/git-to-k8s /var/tmp/git-to-k8s/git-to-k8s  
-Cloning into '/var/tmp/git-to-k8s/git-to-k8s'...
+ - shell: cp -rf /Users/stefan/git/git-to-k8s /var/tmp/git-to-k8s/git-to-k8s  
  - shell: cd git-to-k8s  
- Step: 2 / 4 - build docker images and push to registry 
+ Step: 2 / 4 - Build docker images and push to registry 
  - shell: docker build -t devfans/test:0.0.1 -f sample/Dockerfile sample  
 Sending build context to Docker daemon  18.43kB
-Step 1/4 : FROM node:alpine
- ---> cc3ade82a1f2
-Step 2/4 : COPY package.json package.json
+Step 1/5 : FROM node:alpine
+ ---> d97a436daee9
+Step 2/5 : COPY package.json package.json
  ---> Using cache
- ---> 0cec40705c46
-Step 3/4 : RUN npm install --production
+ ---> 10b9ecfdaad0
+Step 3/5 : COPY index.js index.js
  ---> Using cache
- ---> 4171db2c8f89
-Step 4/4 : CMD npm start
+ ---> 791a2c9ae772
+Step 4/5 : RUN npm install --production
  ---> Using cache
- ---> 1c8b6cab22ae
-Successfully built 1c8b6cab22ae
+ ---> cf5e9c30358c
+Step 5/5 : CMD npm start
+ ---> Using cache
+ ---> f3685f97d68f
+Successfully built f3685f97d68f
 Successfully tagged devfans/test:0.0.1
  - shell: docker push devfans/test:0.0.1  
 The push refers to repository [docker.io/devfans/test]
-c7762379164b: Preparing
-6cfb3c56ee53: Preparing
-1fe401b6b7c6: Preparing
-b15aad9c911d: Preparing
-2aebd096e0e2: Preparing
-c7762379164b: Layer already exists
-6cfb3c56ee53: Layer already exists
-1fe401b6b7c6: Layer already exists
-b15aad9c911d: Layer already exists
-2aebd096e0e2: Layer already exists
-0.0.1: digest: sha256:1375e4af0340bac927b89481b236ca128a8c600ff3f2e6a7f52413ab5f954757 size: 1369
- Step: 3 / 4 - deploy charts 
- - shell: helm install --name test-git-to-k8s -f sample/charts/test/values.yaml ./sample/charts/test  
-NAME:   test-git-to-k8s
-LAST DEPLOYED: Thu Dec 27 07:53:31 2018
+a42f2337f3ac: Preparing
+e69bf457f958: Preparing
+050688a0d9a4: Preparing
+edbc4261579a: Preparing
+899ccf6367e3: Preparing
+61ab2b48f3de: Preparing
+f1b5933fe4b5: Preparing
+f1b5933fe4b5: Waiting
+61ab2b48f3de: Waiting
+e69bf457f958: Layer already exists
+edbc4261579a: Layer already exists
+050688a0d9a4: Layer already exists
+899ccf6367e3: Layer already exists
+a42f2337f3ac: Layer already exists
+f1b5933fe4b5: Layer already exists
+61ab2b48f3de: Layer already exists
+0.0.1: digest: sha256:5606ad82de703b895576b0ab6846b5da9aedaa0c0f2e852fd00fea4a408c8757 size: 1783
+REVISION: 1
+RELEASED: Mon Aug  5 20:06:42 2019
+CHART: test-5.0.3
+USER-SUPPLIED VALUES:
+fullname: test-git-to-k8s
+image:
+  pullPolicy: IfNotPresent
+  registry: docker.io
+  repository: devfans/test
+  tag: 0.0.1
+ingress:
+  annotations: {}
+  enabled: false
+  hosts:
+  - test.local
+  path: /
+  tls: []
+resources:
+  requests:
+    cpu: 10m
+    memory: 10Mi
+serviceType: ClusterIP
+testPath: /
+testPort: 80
+
+COMPUTED VALUES:
+fullname: test-git-to-k8s
+image:
+  pullPolicy: IfNotPresent
+  registry: docker.io
+  repository: devfans/test
+  tag: 0.0.1
+ingress:
+  annotations: {}
+  enabled: false
+  hosts:
+  - test.local
+  path: /
+  tls: []
+resources:
+  requests:
+    cpu: 10m
+    memory: 10Mi
+serviceType: ClusterIP
+testPath: /
+testPort: 80
+
+HOOKS:
+MANIFEST:
+
+---
+# Source: test/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-git-to-k8s
+  labels:
+    app: test-git-to-k8s
+    chart: "test-5.0.3"
+    release: "test-git-to-k8s"
+    heritage: "Tiller"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  selector:
+    app: test-git-to-k8s
+---
+# Source: test/templates/deployment.yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: test-git-to-k8s
+  labels:
+    app: test-git-to-k8s
+    chart: "test-5.0.3"
+    release: "test-git-to-k8s"
+    heritage: "Tiller"
+spec:
+  selector:
+    matchLabels:
+      app: test-git-to-k8s
+      release: "test-git-to-k8s"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: test-git-to-k8s
+        chart: "test-5.0.3"
+        release: "test-git-to-k8s"
+    spec:
+      containers:
+      - name: test-git-to-k8s
+        image: "docker.io/devfans/test:0.0.1"
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - name: http
+          containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+            httpHeaders:
+            - name: Host
+              value: "127.0.0.1"
+          initialDelaySeconds: 120
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+            httpHeaders:
+            - name: Host
+              value: "127.0.0.1"
+          initialDelaySeconds: 30
+          timeoutSeconds: 3
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: 10m
+            memory: 10Mi
+ Step: 3 / 4 - Deploy charts 
+ - shell: helm upgrade -f sample/charts/test/values.yaml test-git-to-k8s sample/charts/test  
+Release "test-git-to-k8s" has been upgraded.
+LAST DEPLOYED: Mon Aug  5 20:08:26 2019
 NAMESPACE: default
 STATUS: DEPLOYED
 
 RESOURCES:
-==> v1beta1/Deployment
-NAME             AGE
-test-git-to-k8s  0s
-
 ==> v1/Pod(related)
-
 NAME                              READY  STATUS   RESTARTS  AGE
-test-git-to-k8s-5fd6576659-9cxzl  0/1    Pending  0         0s
+test-git-to-k8s-5bb8d969bc-j6p5t  1/1    Running  0         105s
 
 ==> v1/Service
+NAME             TYPE       CLUSTER-IP    EXTERNAL-IP  PORT(S)  AGE
+test-git-to-k8s  ClusterIP  172.20.36.14  <none>       80/TCP   105s
 
-NAME             AGE
-test-git-to-k8s  0s
+==> v1beta1/Deployment
+NAME             READY  UP-TO-DATE  AVAILABLE  AGE
+test-git-to-k8s  1/1    1           1          105s
 
 
  Step: 4 / 4 - Clean up 
- - shell: rm -rf /var/tmp/git-to-k8s/git-to-k8s
-
+ - shell: rm -rf /var/tmp/git-to-k8s/git-to-k8s  
 ```
 
 [npm-image]: https://img.shields.io/npm/v/git-to-k8s.svg
