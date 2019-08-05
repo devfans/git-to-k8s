@@ -128,6 +128,8 @@ class MainFlow {
   constructor () {
     this.deps = ['git', 'docker', 'helm', 'kubectl']
     this.dry = parser.get('dry') !== undefined
+    this.image_only = parser.get('image-only') !== undefined
+    this.chart_only = parser.get('chart-only') !== undefined
     this.debug = parser.get('debug') !== undefined
     this.local = parser.get('local') !== undefined
     this.purge_first = parser.get('purge') !== undefined
@@ -142,7 +144,15 @@ class MainFlow {
     }
 
     if (parser.get('help')) {
-      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local]')
+      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local] [--image-only] [--chart-only]')
+      logger.info('Options:')
+      logger.info('    --help: get help info')
+      logger.info('    --local: use a local file system copy as source')
+      logger.info('    --purge: purge helm release first before deploy each chart')
+      logger.info('    --image-only: only update images to registry')
+      logger.info('    --chart-only: only deploy charts without touching images')
+      logger.info('    --dry: dry run only and shows commands to execute, with images will be built')
+      logger.info('    --debug: show debug info from helm')
       logger.exit_success()
     }
 
@@ -208,7 +218,7 @@ class MainFlow {
     this.steps.push(() => {
       // build image
       const cmds_build_image = []
-      this.images.forEach(image => {
+      if (!this.chart_only) this.images.forEach(image => {
         const tag = path.join(image.registry, image.name) + ':' + image.tag
         const dir = image.path || '.'
         if (image.prepare && image.prepare.length > 0) cmds_build_image.push(image.prepare)
@@ -216,7 +226,7 @@ class MainFlow {
       })
 
       // push image
-      const cmds_push_image = this.images.map(image => `docker push ${path.join(image.registry, image.name) + ':' + image.tag}`)
+      const cmds_push_image = this.chart_only ? [] : this.images.map(image => `docker push ${path.join(image.registry, image.name) + ':' + image.tag}`)
 
       return new Step({
         name: 'Build docker images and push to registry',
@@ -229,7 +239,7 @@ class MainFlow {
     this.steps.push(() => {
       const cmds = []
 
-      this.charts.forEach(chart => {
+      if (!this.image_only) this.charts.forEach(chart => {
         const dir = path.join(chart.path, chart.values)
         if (_shell.exec(`helm get ${chart.release}`).code == 0) {
           if (this.purge_first) {
