@@ -157,7 +157,7 @@ class MainFlow {
     }
 
     if (parser.subcommand === undefined) logger.fatal('Git remote url is required! use --help for more info!')
-    this.repo_url = parser.subcommand
+    this.repo_url = this.local ? path.resolve(parser.subcommand) : parser.subcommand
     const _repo_name = /\/([^\/]+)$/.exec(this.repo_url)
     if (!_repo_name) logger.fatal(`Invalid repo url!`)
     this.repo_name = _repo_name[1].replace(/.git$/, '').replace(/[^\w.-]/g, '')
