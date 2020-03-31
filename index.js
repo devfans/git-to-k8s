@@ -320,7 +320,7 @@ class MainFlow {
     })
 
     const helm_version = /v(\d+)\.\d+\.\d+/.exec(shell.run('helm version --client').stdout || '')
-    if (helm_version && helm_check[1] == '2') this.deps_helm3 = false
+    if (helm_version && helm_version[1] == '2') this.deps_helm3 = false
     logger.note(`Using helm ${this.deps_helm3 ? '>v2' : 'v2'}`)
   }
 }
