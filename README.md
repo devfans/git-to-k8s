@@ -14,7 +14,7 @@ npm install -g git-to-k8s
 ## Get Started
 
 ### Dependencies
-- helm initialized in Kubernetes cluster
+- helm initialized in Kubernetes cluster (Support helm v3 since 0.4.0)
 - docker available and logged in already to registry
 - git available
 
@@ -41,11 +41,13 @@ npm install -g git-to-k8s
         "registry": "(optional, registry for images)"
       }
     ],
+    "namespace": "(optional, default namespace to use for deployments)",
     "charts": [
       {
         "path": "charts (optional, default: charts)",
         "values": "values.prod.yaml",
-        "release": "px.app1"
+        "release": "px.app1",
+        "namespace": "(optional, namespace for deployment of this chart)"
       }
     ]
   }
@@ -59,15 +61,18 @@ Installation
 ```
 $ npm i -g git-to-k8s
 $ git-to-k8s --help
-Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local] [--image-only] [--chart-only] 
+Usage: git-to-k8s repo_url [--dry] [-b branch] [-n namespace] [--purge] [--debug] [--local] [--image-only] [--chart-only] 
  Options: 
+     -b branch: specify the git branch for a remote repository 
+     -n namespace: specify the target namespace for deployment(When specified, 
+                   it will override the one specified in package.json if there is any) 
      --help: get help info 
      --local: use a local file system copy as source 
      --purge: purge helm release first before deploy each chart 
      --image-only: only update images to registry 
      --chart-only: only deploy charts without touching images 
      --dry: dry run only and shows commands to execute, with images will be built 
-     --debug: show debug info from helm 
+     --debug: show debug info from helm
 ```
 Sample:
 ```

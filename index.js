@@ -121,17 +121,20 @@ class Chart {
     this.path = options.path || 'charts'
     this.values = options.values
     this.release = options.release
+    this.namespace = options.namespace
   }
 }
 
 class MainFlow {
   constructor () {
     this.deps = ['git', 'docker', 'helm', 'kubectl']
+    this.deps_helm3 = true
     this.dry = parser.get('dry') !== undefined
     this.image_only = parser.get('image-only') !== undefined
     this.chart_only = parser.get('chart-only') !== undefined
     this.debug = parser.get('debug') !== undefined
     this.local = parser.get('local') !== undefined
+    this.namespace = parser.get('n')
     this.purge_first = parser.get('purge') !== undefined
     this.repo_branch = parser.get('b') || 'master'
     this.steps = []
@@ -144,8 +147,11 @@ class MainFlow {
     }
 
     if (parser.get('help') || parser.params.attributes.includes('h')) {
-      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [--purge] [--debug] [--local] [--image-only] [--chart-only]')
+      logger.info('Usage: git-to-k8s repo_url [--dry] [-b branch] [-n namespace] [--purge] [--debug] [--local] [--image-only] [--chart-only]')
       logger.info('Options:')
+      logger.info('    -b branch: specify the git branch for a remote repository')
+      logger.info('    -n namespace: specify the target namespace for deployment(When specified,')
+      logger.info('                  it will override the one specified in package.json if there is any)')
       logger.info('    --help: get help info')
       logger.info('    --local: use a local file system copy as source')
       logger.info('    --purge: purge helm release first before deploy each chart')
@@ -182,7 +188,8 @@ class MainFlow {
       this.charts = this.proj.deploy.charts.map(_chart => new Chart({
         path: _chart.path,
         values: _chart.values,
-        release: _chart.release
+        release: _chart.release,
+        namespace: this.namespace || _chart.namespace || this.proj.deploy.namespace
       }))
     } catch (e) {
       logger.error(e)
@@ -238,18 +245,20 @@ class MainFlow {
     // STEP-3: deploy charts
     this.steps.push(() => {
       const cmds = []
+      const debug_arg = this.debug ? ' --debug' : ''
 
       if (!this.image_only) this.charts.forEach(chart => {
+        const namespace_arg = chart.namespace ? ` --namespace ${chart.namespace}` : ''
         const dir = path.join(chart.path, chart.values)
-        if (_shell.exec(`helm get ${chart.release}`).code == 0) {
+        if (_shell.exec(`helm get ${chart.release}${namespace_arg}`).code == 0) {
           if (this.purge_first) {
-            cmds.push(`helm delete ${chart.release} --purge${this.debug ? ' --debug': ''}`)
+            cmds.push(`helm delete ${chart.release}${this.deps_helm3 ? '' : ' --purge'}${debug_arg}${namespace_arg}`)
           } else {
-            cmds.push(`helm upgrade -f ${dir} ${chart.release} ${chart.path}${this.debug ? ' --debug': ''}`)
+            cmds.push(`helm upgrade -f ${dir} ${chart.release} ${chart.path}${debug_arg}${namespace_arg}`)
             return
           }
         }
-        cmds.push(`helm install --name ${chart.release} -f ${dir} ${chart.path}${this.debug ? ' --debug': ''}`)
+        cmds.push(`helm install ${this.deps_helm3 ? '' : '--name '}${chart.release} -f ${dir} ${chart.path}${debug_arg}${namespace_arg}`)
       })
       return new Step({
         name: 'Deploy charts',
@@ -309,6 +318,10 @@ class MainFlow {
     this.deps.forEach(dep => {
       if (!_shell.which(dep)) logger.fatal(`No ${dep} was installed!`)
     })
+
+    const helm_version = /v(\d+)\.\d+\.\d+/.exec(shell.run('helm version --client').stdout || '')
+    if (helm_version && helm_check[1] == '2') this.deps_helm3 = false
+    logger.note(`Using helm ${this.deps_helm3 ? '>v2' : 'v2'}`)
   }
 }
 

@@ -10,5 +10,4 @@ describe('git-to-k8s', function(){
     lib.logger.info('Testing')
     lib.shell.run('pwd')
   })
-
 })
