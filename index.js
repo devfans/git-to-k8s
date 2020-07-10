@@ -249,8 +249,9 @@ class MainFlow {
 
       if (!this.image_only) this.charts.forEach(chart => {
         const namespace_arg = chart.namespace ? ` --namespace ${chart.namespace}` : ''
+        const get_arg = this.deps_helm3 ? ' hooks' : ''
         const dir = path.join(chart.path, chart.values)
-        if (_shell.exec(`helm get ${chart.release}${namespace_arg}`).code == 0) {
+        if (_shell.exec(`helm get${get_arg} ${chart.release}${namespace_arg}`).code == 0) {
           if (this.purge_first) {
             cmds.push(`helm delete ${chart.release}${this.deps_helm3 ? '' : ' --purge'}${debug_arg}${namespace_arg}`)
           } else {
